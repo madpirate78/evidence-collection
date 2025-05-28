@@ -1,104 +1,197 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# CMS Evidence Collection Platform - User Guide
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+## For Developers
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+See [CONTRIBUTING.md] for development setup and deployment instructions.
 
-## Features
+## 🎯 Purpose
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Middleware
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+This platform collects evidence from users of Child Maintenance Service (CMS). All data collected supports:
 
-## Demo
+- Pattern analysis for judicial review
+- Submissions to the Lords Committee
+- Communications with MPs
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+## 🚀 Quick Start Guide
 
-## Deploy to Vercel
+### For Evidence Contributors
 
-Vercel deployment will guide you through creating a Supabase account and project.
+1. **Create an Account**
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+   - Go to [yoursite.com/sign-in](/)
+   - Click "Sign up"
+   - Use a valid email (you'll need to verify it)
+   - Choose a strong password
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+2. **Submit Your Evidence**
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+   - Navigate to "Submit Evidence"
+   - Complete the 4-step questionnaire:
+     - Quick Assessment (2 mins)
+     - Financial Evidence (3 mins)
+     - Child Impact (3 mins)
+     - Final Details (2 mins)
+   - Your progress auto-saves - you can return later
+   - Click "Submit Evidence" when complete
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+3. **View Your Submissions**
 
-## Clone and run locally
+   - Go to "Dashboard" to see all your submissions
+   - Click "View Details" to review any submission
+   - Use "Redact Information" to hide sensitive data
+   - You can delete submissions at any time
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+4. **Check Live Statistics**
+   - Visit "Statistics" to see real-time data
+   - Watch the evidence counter grow
+   - See patterns emerging across all submissions
 
-2. Create a Next.js app using the Supabase Starter template npx command
+### For Administrators
 
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
+1. **Access Admin Panel**
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
+   - Navigate to [yoursite.com/admin](/)
+   - Login with admin credentials
+   - View all anonymised submissions
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+2. **Export Evidence**
 
-3. Use `cd` to change into the app's directory
+   - Click "Export Full Report (CSV)" for judicial review
+   - Use "Export Descriptions" for qualitative analysis
+   - Reports include summary statistics
 
-   ```bash
-   cd with-supabase-app
-   ```
+3. **Monitor Patterns**
+   - Track key metrics on admin dashboard
+   - Identify emerging patterns
+   - Flag extreme cases for legal team
 
-4. Rename `.env.example` to `.env.local` and update the following:
+## 📊 Key Features
 
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=[INSERT SUPABASE PROJECT API ANON KEY]
-   ```
+### Security & Privacy
 
-   Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` can be found in [your Supabase project's API settings](https://app.supabase.com/project/_/settings/api)
+- ✅ All data encrypted (transit & rest)
+- ✅ GDPR compliant
+- ✅ Complete data deletion available
+- ✅ Redaction tools for sensitive info
+- ✅ Anonymous evidence IDs (e.g., EV-2QX7P)
 
-5. You can now run the Next.js local development server:
+### Evidence Categories Tracked
 
-   ```bash
-   npm run dev
-   ```
+- **Financial**: Fictitious arrears, payment demands
+- **Legal**: Regulation 50 violations, enforcement abuse
+- **Child Impact**: Psychological manipulation, lost bedrooms
+- **Care Arrangements**: Shared care nights, child benefit bias
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+### Auto-Save Feature
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+Your evidence is automatically saved as you type. If you need to stop:
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+1. Just close the browser
+2. Return to "Submit Evidence"
+3. Your draft will be waiting
 
-## Feedback and issues
+## 🔧 Troubleshooting
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+### Can't Login?
 
-## More Supabase examples
+- Check your email for verification link
+- Try "Forgot Password" option
+- Ensure cookies are enabled
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+### Submission Won't Complete?
+
+- Ensure all required fields are filled
+- Check you've ticked the consent box
+- Try a different browser if issues persist
+
+### Need to Update Evidence?
+
+- You cannot edit submitted evidence (for legal integrity)
+- Submit a new entry with updated information
+- Delete the old submission if needed
+
+## 📱 Mobile Users
+
+The platform works on all devices:
+
+- Forms optimised for mobile
+- Tables scroll horizontally
+- Large tap targets for easy use
+- Works in portrait or landscape
+
+## 🆘 Getting Help
+
+### Technical Support
+
+- Email: support@cmsjudicialreview.org
+- Response within 48 hours
+
+### Evidence Questions
+
+- What counts as evidence? Any CMS interaction
+- Should I redact? Yes, remove addresses/phone numbers
+- Multiple cases? Submit separate evidence for each
+
+### Emotional Support
+
+If you're struggling with CMS issues:
+
+- Samaritans: 116 123 (free, 24/7)
+- Families Need Fathers: fnf.org.uk
+
+## 🎓 Tips for Strong Evidence
+
+1. **Be Specific**
+
+   - Include dates where possible
+   - Quote exact amounts claimed
+   - Describe specific incidents
+
+2. **Focus on Impact**
+
+   - How has this affected your children?
+   - What's the financial impact?
+   - Include emotional/psychological effects
+
+3. **Document Everything**
+   - Reference case numbers
+   - Mention specific CMS staff/departments
+   - Note any written correspondence
+
+## 🔒 Data Usage Agreement
+
+By submitting evidence, you agree that:
+
+- Your anonymised data can be used in legal proceedings
+- Patterns from your data can be included in reports
+- You can delete your data at any time before legal submission
+- Your personal details will NEVER be shared
+
+## 🚨 Important Reminders
+
+1. **This is Legal Evidence**
+
+   - Be truthful and accurate
+   - Don't exaggerate claims
+   - Include only your own experiences
+
+2. **Protect Your Privacy**
+
+   - Use the redaction tool
+   - Don't include full addresses
+   - Avoid children's surnames
+
+3. **You're Not Alone**
+   - Every submission matters
+   - Together we're driving change
+   - Your evidence makes a difference
+
+---
+
+### Platform Version: 2.0
+
+### Last Updated: May 2025
+
+### For Judicial Review: [Case Reference]
+
+**Remember**: Your evidence is building an undeniable case for reform. Thank you for your courage in speaking out.

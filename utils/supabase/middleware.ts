@@ -1,62 +1,139 @@
 import { createServerClient } from "@supabase/ssr";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-export const updateSession = async (request: NextRequest) => {
-  // This `try/catch` block is only here for the interactive tutorial.
-  // Feel free to remove once you have Supabase connected.
-  try {
-    // Create an unmodified response
-    let response = NextResponse.next({
-      request: {
-        headers: request.headers,
-      },
-    });
+export async function updateSession(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({
+    request,
+  });
 
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll();
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) =>
-              request.cookies.set(name, value),
-            );
-            response = NextResponse.next({
-              request,
-            });
-            cookiesToSet.forEach(({ name, value, options }) =>
-              response.cookies.set(name, value, options),
-            );
-          },
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
         },
       },
-    );
+    }
+  );
 
-    // This will refresh session if expired - required for Server Components
-    // https://supabase.com/docs/guides/auth/server-side/nextjs
-    const user = await supabase.auth.getUser();
+  // IMPORTANT: DO NOT REMOVE auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    // protected routes
-    if (request.nextUrl.pathname.startsWith("/protected") && user.error) {
-      return NextResponse.redirect(new URL("/sign-in", request.url));
+  // Define route types
+  const protectedRoutes = [
+    "/dashboard",
+    "/statement-portal",
+    "/view-submission",
+  ];
+  const adminRoutes = ["/admin"];
+  const authRoutes = ["/sign-in", "/sign-up", "/auth"];
+
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    request.nextUrl.pathname.startsWith(route)
+  );
+
+  const isAdminRoute = adminRoutes.some((route) =>
+    request.nextUrl.pathname.startsWith(route)
+  );
+
+  const isAuthRoute = authRoutes.some((route) =>
+    request.nextUrl.pathname.startsWith(route)
+  );
+
+  // Check admin routes FIRST (most restrictive)
+  if (isAdminRoute) {
+    if (!user) {
+      // No user at all - redirect to sign in
+      const url = request.nextUrl.clone();
+      url.pathname = "/sign-in";
+      url.searchParams.set("redirectTo", request.nextUrl.pathname);
+      return NextResponse.redirect(url);
     }
 
-    if (request.nextUrl.pathname === "/" && !user.error) {
-      return NextResponse.redirect(new URL("/protected", request.url));
+    // Check if user is admin using database
+    const { data: roleData, error } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+
+    const isAdmin =
+      !error &&
+      (roleData?.role === "admin" || roleData?.role === "super_admin");
+
+    if (!isAdmin) {
+      // Log the unauthorized access attempt
+      try {
+        await supabase.from("admin_activity_logs").insert({
+          admin_id: user.id,
+          action: "unauthorized_admin_access_attempt",
+          details: {
+            path: request.nextUrl.pathname,
+            timestamp: new Date().toISOString(),
+          },
+          ip_address:
+            request.headers.get("x-forwarded-for") ||
+            request.headers.get("x-real-ip"),
+          user_agent: request.headers.get("user-agent"),
+        });
+      } catch (logError) {
+        console.error("Failed to log unauthorized access:", logError);
+      }
+
+      // User is not admin - show forbidden page
+      const url = request.nextUrl.clone();
+      url.pathname = "/403";
+      return NextResponse.redirect(url);
     }
 
-    return response;
-  } catch (e) {
-    // If you are here, a Supabase client could not be created!
-    // This is likely because you have not set up environment variables.
-    // Check out http://localhost:3000 for Next Steps.
-    return NextResponse.next({
-      request: {
-        headers: request.headers,
-      },
-    });
+    // User is admin - log the access
+    try {
+      await supabase.from("admin_activity_logs").insert({
+        admin_id: user.id,
+        action: "admin_page_access",
+        details: {
+          path: request.nextUrl.pathname,
+          timestamp: new Date().toISOString(),
+        },
+        ip_address:
+          request.headers.get("x-forwarded-for") ||
+          request.headers.get("x-real-ip"),
+        user_agent: request.headers.get("user-agent"),
+      });
+    } catch (logError) {
+      console.error("Failed to log admin access:", logError);
+    }
   }
-};
+
+  // Handle regular protected routes
+  if (!user && isProtectedRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/sign-in";
+    url.searchParams.set("redirectTo", request.nextUrl.pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // Redirect authenticated users away from auth pages
+  if (user && isAuthRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
+  return supabaseResponse;
+}

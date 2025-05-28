@@ -12,6 +12,7 @@
 
 # production
 /build
+/.vscode/
 
 # misc
 .DS_Store
@@ -28,7 +29,11 @@ yarn-error.log*
 
 # vercel
 .vercel
+/.continue/
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.vercel/
+.continue/
+node_modules/
