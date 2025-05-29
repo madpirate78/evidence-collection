@@ -36,19 +36,6 @@ export async function POST(request: Request) {
     // Delete in correct order
     const deletionLog = [];
 
-    // 1. Delete admin activity logs
-    const { error: logsError, count: logsCount } = await adminClient
-      .from("admin_activity_logs")
-      .delete()
-      .eq("admin_id", user.id);
-
-    if (!logsError) {
-      deletionLog.push({
-        table: "admin_activity_logs",
-        deleted: logsCount || 0,
-      });
-    }
-
     // 2. Delete evidence submissions
     const { error: subsError, count: subsCount } = await adminClient
       .from("evidence_submissions")

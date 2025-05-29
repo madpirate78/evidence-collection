@@ -397,9 +397,6 @@ export async function submitEvidenceAction(formData: FormData) {
       };
     }
 
-    // Log successful submission
-    console.log(`Evidence submitted successfully: ${data.id}`);
-
     return {
       success: true,
       data: {

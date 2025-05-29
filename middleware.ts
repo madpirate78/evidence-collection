@@ -1,4 +1,4 @@
-// middleware.ts - Complete version with CSRF protection
+// middleware.ts - Without admin functionality
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { csrfProtection, initializeCSRFToken } from "./utils/csrf-middleware";
@@ -14,31 +14,7 @@ const ROUTE_CONFIG = {
     "/forgot-password",
   ],
   protected: ["/dashboard", "/statement-portal", "/view-submission"],
-  admin: ["/admin"],
 };
-
-// Cache for admin status with cleanup
-const adminCache = new Map<string, { isAdmin: boolean; timestamp: number }>();
-const ADMIN_CACHE_TTL = 300000; // 5 minutes
-const MAX_CACHE_SIZE = 1000;
-
-// Clean up old cache entries
-function cleanupAdminCache() {
-  const now = Date.now();
-  const entries = Array.from(adminCache.entries());
-
-  for (const [key, value] of entries) {
-    if (now - value.timestamp > ADMIN_CACHE_TTL) {
-      adminCache.delete(key);
-    }
-  }
-
-  if (adminCache.size > MAX_CACHE_SIZE) {
-    const keys = Array.from(adminCache.keys());
-    const oldestKeys = keys.slice(0, adminCache.size - MAX_CACHE_SIZE);
-    oldestKeys.forEach((key) => adminCache.delete(key));
-  }
-}
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -70,12 +46,9 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute = ROUTE_CONFIG.protected.some((route) =>
     path.startsWith(route)
   );
-  const isAdminRoute = ROUTE_CONFIG.admin.some((route) =>
-    path.startsWith(route)
-  );
 
   // Skip for truly public routes
-  if (isPublicRoute && !isProtectedRoute && !isAdminRoute) {
+  if (isPublicRoute && !isProtectedRoute) {
     return response;
   }
 
@@ -99,8 +72,7 @@ export async function middleware(request: NextRequest) {
       }
     );
 
-    ////////////////////////////////////////////////////////////////////
-    // Get user session// or session ???????????????
+    // Get user session
     const {
       data: { session },
       error,
@@ -123,92 +95,11 @@ export async function middleware(request: NextRequest) {
     }
 
     // Check authentication for protected routes
-    if (isProtectedRoute || isAdminRoute) {
+    if (isProtectedRoute) {
       if (!user || error) {
         const url = new URL("/sign-in", request.url);
         url.searchParams.set("redirectTo", path);
         return NextResponse.redirect(url);
-      }
-    }
-
-    // Handle admin routes
-    if (isAdminRoute && user) {
-      // Clean up cache periodically
-      if (Math.random() < 0.01) {
-        try {
-          cleanupAdminCache();
-        } catch (cleanupError) {
-          console.error("Cache cleanup failed:", cleanupError);
-          // Continue without failing
-        }
-
-        let isAdmin = false;
-
-        // Check cache first
-        const cached = adminCache.get(user.id);
-        if (cached && Date.now() - cached.timestamp < ADMIN_CACHE_TTL) {
-          isAdmin = cached.isAdmin;
-        } else {
-          // Check database
-          try {
-            const { data: roleData } = await supabase
-              .from("user_roles")
-              .select("role")
-              .eq("user_id", user.id)
-              .single();
-
-            isAdmin =
-              roleData?.role === "admin" || roleData?.role === "super_admin";
-
-            // Update cache
-            adminCache.set(user.id, { isAdmin, timestamp: Date.now() });
-          } catch (roleError) {
-            console.error("Error checking admin role:", roleError);
-            isAdmin = false;
-          }
-        }
-
-        if (!isAdmin) {
-          // Log unauthorized access attempt
-          try {
-            await supabase.from("admin_activity_logs").insert({
-              admin_id: user.id,
-              action: "unauthorized_admin_access_attempt",
-              details: {
-                path,
-                timestamp: new Date().toISOString(),
-                ip:
-                  request.headers.get("x-forwarded-for") ||
-                  request.headers.get("x-real-ip") ||
-                  "unknown",
-                userAgent: request.headers.get("user-agent"),
-              },
-            });
-          } catch (logError) {
-            console.error("Failed to log unauthorized access:", logError);
-          }
-
-          return NextResponse.redirect(new URL("/403", request.url));
-        }
-
-        // Log successful admin access
-        try {
-          await supabase.from("admin_activity_logs").insert({
-            admin_id: user.id,
-            action: "admin_page_access",
-            details: {
-              path,
-              timestamp: new Date().toISOString(),
-              ip:
-                request.headers.get("x-forwarded-for") ||
-                request.headers.get("x-real-ip") ||
-                "unknown",
-              userAgent: request.headers.get("user-agent"),
-            },
-          });
-        } catch (logError) {
-          console.error("Failed to log admin access:", logError);
-        }
       }
     }
 
@@ -257,7 +148,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // For protected routes, redirect to sign-in on error
-    if (isProtectedRoute || isAdminRoute) {
+    if (isProtectedRoute) {
       const url = new URL("/sign-in", request.url);
       url.searchParams.set("redirectTo", path);
       return NextResponse.redirect(url);

@@ -41,7 +41,6 @@ export default function Home() {
               `Dev auto-login failed: ${error.message}\n\nPlease check DEV_EMAIL and DEV_PASSWORD in app/page.tsx`
             );
           } else {
-            console.log("Auto-login successful:", data.user?.email);
           }
         } catch (err) {
           console.error("Auto-login error:", err);

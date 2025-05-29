@@ -166,11 +166,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Log successful submission for monitoring
-    console.log(
-      `Evidence submission successful: ID ${insertedData.id}, User: ${user.id}, IP: ${clientIP}`
-    );
-
     // Return success response
     return NextResponse.json({
       success: true,

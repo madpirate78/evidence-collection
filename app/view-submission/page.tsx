@@ -5,7 +5,7 @@ import { useEffect, useState, Suspense } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth, AuthProvider } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { DateDisplay } from "@/utils/dateUtils";
 import { clientSafeId } from "@/utils/secureId";
 

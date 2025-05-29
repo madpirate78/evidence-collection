@@ -1,4 +1,4 @@
-// contexts/AuthContext.tsx - Fixed with Suspense boundary
+// contexts/AuthContext.tsx - Without admin functionality
 "use client";
 
 import {
@@ -20,7 +20,6 @@ interface AuthState {
   loading: boolean;
   initialised: boolean;
   error: string | null;
-  isAdmin: boolean;
 }
 
 interface AuthContextType extends AuthState {
@@ -34,7 +33,6 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   initialised: false,
   error: null,
-  isAdmin: false,
   signOut: async () => {},
   refreshAuth: async () => {},
 });
@@ -50,14 +48,12 @@ export const useAuth = () => {
 interface AuthProviderProps {
   children: React.ReactNode;
   requireAuth?: boolean;
-  requireAdmin?: boolean;
 }
 
 // Separate component that uses useSearchParams with Suspense
 function AuthProviderWithSearchParams({
   children,
   requireAuth = false,
-  requireAdmin = false,
 }: AuthProviderProps) {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
@@ -65,11 +61,10 @@ function AuthProviderWithSearchParams({
     loading: true,
     initialised: false,
     error: null,
-    isAdmin: false,
   });
 
   const router = useRouter();
-  const searchParams = useSearchParams(); // This now has Suspense boundary
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const authListenerRef = useRef<any>(null);
 
@@ -77,27 +72,6 @@ function AuthProviderWithSearchParams({
   const updateAuthState = useCallback((updates: Partial<AuthState>) => {
     setAuthState((prev) => ({ ...prev, ...updates }));
   }, []);
-
-  // Check admin status
-  const checkAdminStatus = useCallback(
-    async (userId: string): Promise<boolean> => {
-      try {
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", userId)
-          .single();
-
-        const userIsAdmin =
-          roleData?.role === "admin" || roleData?.role === "super_admin";
-        return userIsAdmin;
-      } catch (err) {
-        console.error("Error checking admin status:", err);
-        return false;
-      }
-    },
-    [supabase]
-  );
 
   // Initialize auth with better post-login handling
   useEffect(() => {
@@ -134,14 +108,9 @@ function AuthProviderWithSearchParams({
               data: { session: retrySession },
             } = await supabase.auth.getSession();
             if (retrySession?.user && mounted) {
-              let isAdmin = false;
-              if (requireAdmin) {
-                isAdmin = await checkAdminStatus(retrySession.user.id);
-              }
               updateAuthState({
                 user: retrySession.user,
                 session: retrySession,
-                isAdmin,
                 loading: false,
                 initialised: true,
                 error: null,
@@ -152,21 +121,10 @@ function AuthProviderWithSearchParams({
         }
 
         if (session?.user) {
-          // Check admin status if needed
-          let isAdmin = false;
-          if (requireAdmin) {
-            isAdmin = await checkAdminStatus(session.user.id);
-            if (!isAdmin && mounted) {
-              router.push("/403");
-              return;
-            }
-          }
-
           if (mounted) {
             updateAuthState({
               user: session.user,
               session,
-              isAdmin,
               loading: false,
               initialised: true,
               error: null,
@@ -178,7 +136,6 @@ function AuthProviderWithSearchParams({
             updateAuthState({
               user: null,
               session: null,
-              isAdmin: false,
               loading: false,
               initialised: true,
               error: null,
@@ -195,26 +152,16 @@ function AuthProviderWithSearchParams({
           data: { subscription },
         } = supabase.auth.onAuthStateChange(async (event, session) => {
           if (!mounted) return;
-
-          console.log("Auth state change:", event, session?.user?.email);
-
           if (event === "SIGNED_IN" && session) {
-            let isAdmin = false;
-            if (session.user) {
-              isAdmin = await checkAdminStatus(session.user.id);
-            }
-
             updateAuthState({
               user: session.user,
               session,
-              isAdmin,
               error: null,
             });
           } else if (event === "SIGNED_OUT") {
             updateAuthState({
               user: null,
               session: null,
-              isAdmin: false,
               error: null,
             });
 
@@ -251,15 +198,7 @@ function AuthProviderWithSearchParams({
         authListenerRef.current.unsubscribe();
       }
     };
-  }, [
-    supabase,
-    router,
-    requireAuth,
-    requireAdmin,
-    checkAdminStatus,
-    updateAuthState,
-    searchParams,
-  ]);
+  }, [supabase, router, requireAuth, updateAuthState, searchParams]);
 
   // Auth state management
   const signOut = async () => {
@@ -268,26 +207,19 @@ function AuthProviderWithSearchParams({
       updateAuthState({
         user: null,
         session: null,
-        isAdmin: false,
         loading: false,
         error: null,
       });
 
-      // Clear saved form data
-      //localStorage.removeItem("statementDraft");
-      //localStorage.removeItem("statementDraftSaved");
-
-      // Navigate immediately (no more hang!)
+      // Navigate immediately
       router.push("/");
 
       // Then clean up in background
       supabase.auth.signOut().catch((error) => {
         console.error("Background signout error:", error);
-        // Don't update state here - user is already "logged out" in UI
       });
     } catch (error) {
       console.error("Sign out error:", error);
-      // Only show error if something goes wrong with navigation
       updateAuthState({
         error: error instanceof Error ? error.message : "Sign out failed",
         loading: false,
@@ -295,7 +227,7 @@ function AuthProviderWithSearchParams({
     }
   };
 
-  // Refresh auth state (for example, if admin changes)
+  // Refresh auth state
   const refreshAuth = async () => {
     try {
       updateAuthState({ loading: true });
@@ -308,15 +240,9 @@ function AuthProviderWithSearchParams({
       if (error) throw error;
 
       if (session?.user) {
-        let isAdmin = false;
-        if (requireAdmin) {
-          isAdmin = await checkAdminStatus(session.user.id);
-        }
-
         updateAuthState({
           user: session.user,
           session,
-          isAdmin,
           loading: false,
           error: null,
         });
@@ -324,7 +250,6 @@ function AuthProviderWithSearchParams({
         updateAuthState({
           user: null,
           session: null,
-          isAdmin: false,
           loading: false,
           error: null,
         });

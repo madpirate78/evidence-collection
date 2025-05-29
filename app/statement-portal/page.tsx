@@ -126,7 +126,6 @@ function StatementPortalContent() {
           if (savedDate) {
             setLastSaved(new Date(savedDate));
           }
-          console.log("Draft loaded successfully");
         } else {
           // Still try to load what we can
           const safeData = { ...INITIAL_FORM_DATA };
@@ -139,7 +138,6 @@ function StatementPortalContent() {
           });
 
           reset(safeData);
-          console.log("Partial draft data recovered");
         }
       } catch (e) {
         console.error("Failed to parse saved draft:", e);
