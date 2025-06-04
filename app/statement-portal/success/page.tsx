@@ -7,11 +7,16 @@ import { createClient } from "@/utils/supabase/client";
 
 export default function SuccessPage() {
   const router = useRouter();
-
-  // Create Supabase client
   const supabase = createClient();
 
   useEffect(() => {
+    // Clear any remaining draft data
+    localStorage.removeItem("statementDraft");
+    localStorage.removeItem("statementDraftSaved");
+
+    // Also clear session storage if you're using it
+    sessionStorage.clear();
+
     // Check if user is authenticated
     const checkAuth = async () => {
       const {
@@ -52,8 +57,7 @@ export default function SuccessPage() {
 
         <p className="text-green-700 mb-6">
           Thank you for contributing to the CMS evidence collection. Your
-          submission has been securely stored and will be included in the
-          judicial review.
+          submission has been securely stored.
         </p>
 
         <div className="bg-white rounded-lg p-4 mb-6 text-left">
@@ -65,18 +69,13 @@ export default function SuccessPage() {
               <span className="text-green-500 mr-2">✓</span>
               <span>
                 Your evidence is now part of the growing case against CMS
-                discrimination
               </span>
             </li>
             <li className="flex items-start">
               <span className="text-green-500 mr-2">✓</span>
               <span>
-                You can view and manage your submission in your dashboard
+                Your submission is securely stored and cannot be downloaded
               </span>
-            </li>
-            <li className="flex items-start">
-              <span className="text-green-500 mr-2">✓</span>
-              <span>You can redact sensitive information at any time</span>
             </li>
             <li className="flex items-start">
               <span className="text-green-500 mr-2">✓</span>
