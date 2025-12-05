@@ -1,0 +1,21 @@
+{
+  "data": {
+    "total_submissions": 459,
+    "paying_parents": 223,
+    "receiving_parents": 236,
+    "total_children_affected": 1343,
+    "pct_welfare_failures": 64,
+    "pct_affordability_problems": 88,
+    "pct_severe_mental_health": 36,
+    "pct_children_impacted": 64,
+    "pct_communication_failures": 92,
+    "pct_serious_enforcement": 22,
+    "pct_shared_care_problems": 42,
+    "first_submission": "2025-06-09T09:52:30.820Z",
+    "last_submission": "2025-12-05T19:08:43.975Z",
+    "stats_generated_at": "2025-12-05T19:13:56.691Z"
+  },
+  "lastUpdated": "2025-12-05T19:13:56.691Z",
+  "source": "database",
+  "version": "1.0"
+}

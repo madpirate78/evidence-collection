@@ -1,0 +1,74 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [ main, develop, railway-integration ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  dependency-audit:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: |
+          npm audit --json > npm-audit-results.json || true
+          npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-results
+          path: npm-audit-results.json
+
+      - name: Check for critical vulnerabilities
+        run: |
+          if npm audit --audit-level=critical; then
+            echo "No critical vulnerabilities found"
+          else
+            echo "Critical vulnerabilities detected!"
+            exit 1
+          fi
+
+  security-tests:
+    name: Security Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security tests
+        run: npm run test:security
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-test-results
+          path: coverage/
+
+  # Note: OWASP ZAP scan and security headers check moved to local testing only
+  # Run ./scripts/security-check.sh locally for comprehensive testing
+  # Penetration testing will be done against Railway deployment when ready

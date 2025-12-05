@@ -1,0 +1,14 @@
+# Force Nixpacks to use Node.js provider, not Deno
+providers = ["node"]
+
+[variables]
+NIXPACKS_PATH = "/app/node_modules/.bin"
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run start"

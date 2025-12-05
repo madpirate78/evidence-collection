@@ -1,0 +1,4 @@
+# Ignore all report files but keep the directory
+*
+!.gitignore
+!README.md

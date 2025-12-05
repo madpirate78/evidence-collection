@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model EvidenceSubmission {
+  id                 BigInt   @id @default(autoincrement())
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  userId             String?  @map("user_id") @db.Uuid
+  email              String   @default("")
+  fullName           String   @default("") @map("full_name")
+  submissionType     String   @default("cms_scandal_v1") @map("submission_type")
+  parentType         String   @map("parent_type")
+  childrenAffected   Int      @default(1) @map("children_affected")
+  childrenCovered    Int      @default(1) @map("children_covered")
+  agedOutChildren    Int      @default(0) @map("aged_out_children")
+  additionalChildren Int      @default(0) @map("additional_children")
+  impactStatement    String   @map("impact_statement")
+  consentGiven       Boolean  @default(false) @map("consent_given")
+  evidenceData       Json     @default("{}") @map("evidence_data")
+
+  @@index([createdAt])
+  @@index([parentType])
+  @@index([submissionType])
+  @@index([childrenAffected])
+  @@map("evidence_submissions")
+}
+
+model RateLimit {
+  id         BigInt   @id @default(autoincrement())
+  identifier String
+  action     String
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([identifier, action, createdAt])
+  @@map("rate_limits")
+}
+
+model RateLimitViolation {
+  id           BigInt   @id @default(autoincrement())
+  identifier   String
+  action       String
+  userAgent    String?  @map("user_agent")
+  attemptCount Int      @map("attempt_count")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  metadata     Json     @default("{}")
+
+  @@index([identifier, createdAt])
+  @@index([createdAt])
+  @@map("rate_limit_violations")
+}
+
+model RateLimitBlock {
+  id           BigInt   @id @default(autoincrement())
+  identifier   String
+  userAgent    String?  @map("user_agent")
+  blockedUntil DateTime @map("blocked_until") @db.Timestamptz
+  reason       String   @default("Too many requests")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([identifier, userAgent])
+  @@index([blockedUntil])
+  @@map("rate_limit_blocks")
+}

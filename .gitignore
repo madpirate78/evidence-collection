@@ -1,0 +1,78 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+/.vscode/
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# editor
+/.continue/
+node_modules/
+
+# misc
+GEMINI.md
+CLAUDE.md
+
+# Claude Code workings - keep private
+.claude/
+TESTING_SUMMARY.md
+RATE_LIMITING_STATUS.md
+
+# Development/testing artifacts - keep private  
+scripts/quick-rate-test.js
+scripts/browser-rate-limit-test.js
+scripts/direct-rate-limit-test.js
+scripts/db-rate-limit-test.sql
+scripts/rate-limit-performance.js
+scripts/test-rate-limit.js
+
+# Logs
+/logs/
+
+# Backup files
+app/*.bkp
+
+
+# Generated documentation
+README-SCRIPTS.md
+docs/script-registry.json
+docs/QUICK-REFERENCE.md
+
+/lib/generated/prisma
+
+# Local cache
+.cache/
+
+# Dev scripts
+scripts/seed-test-data.ts
+
+# Security test artifacts
+security-check-report-*.txt
+zap.yaml
+security/reports/pentest_*
