@@ -10,6 +10,8 @@ jobs:
   dependency-audit:
     name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci?schema=public"
     steps:
       - uses: actions/checkout@v4
 
@@ -47,6 +49,8 @@ jobs:
   security-tests:
     name: Security Unit Tests
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci?schema=public"
     steps:
       - uses: actions/checkout@v4
 
