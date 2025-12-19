@@ -63,7 +63,8 @@ export function middleware(request: NextRequest) {
     response.cookies.set('csrf_token', csrfToken, {
       httpOnly: false, // Client needs to read this
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      // Use 'none' for embed mode to allow cross-origin iframe cookies (requires secure)
+      sameSite: isEmbed ? 'none' : 'lax',
       maxAge: 60 * 60 * 24 // 24 hours
     })
   }

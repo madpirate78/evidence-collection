@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 
 function Navigation() {
   return (
@@ -47,13 +47,47 @@ function Footer() {
   );
 }
 
+function useEmbedHeightMessaging(isEmbed: boolean) {
+  useEffect(() => {
+    if (!isEmbed) return;
+
+    const sendHeight = () => {
+      window.parent.postMessage(
+        { type: "resize", height: document.body.scrollHeight },
+        "*"
+      );
+    };
+
+    // Send initial height
+    sendHeight();
+
+    // Send on resize
+    window.addEventListener("resize", sendHeight);
+
+    // Observe DOM changes (form fields appearing/disappearing)
+    const observer = new MutationObserver(sendHeight);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+    });
+
+    return () => {
+      window.removeEventListener("resize", sendHeight);
+      observer.disconnect();
+    };
+  }, [isEmbed]);
+}
+
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const isEmbed = searchParams.get("embed") === "true";
 
+  useEmbedHeightMessaging(isEmbed);
+
   if (isEmbed) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="bg-slate-50">
         <main className="container mx-auto px-4 py-8 max-w-7xl">
           {children}
         </main>
