@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CSRFTokenInput, useCSRFToken } from "@/components/csrf-token";
 import {
   ACTIVE_SURVEY_CONFIG,
@@ -579,6 +579,8 @@ const FollowUpQuestion = ({
 
 export default function ConfigDrivenSurveyForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isEmbed = searchParams.get("embed") === "true";
   const config = ACTIVE_SURVEY_CONFIG;
 
   const { token: csrfToken, isReady: csrfReady } = useCSRFToken();
@@ -741,7 +743,7 @@ export default function ConfigDrivenSurveyForm() {
       }
 
       localStorage.removeItem(`${config.surveyId}_draft`);
-      router.push("/statement-portal/success");
+      router.push(`/statement-portal/success${isEmbed ? "?embed=true" : ""}`);
     } catch (error) {
       console.error("Submission error:", error);
       setSubmitError(
