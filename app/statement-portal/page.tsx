@@ -12,7 +12,7 @@ import {
 import {
   validateFormWithConfig,
 } from "@/schemas/form-validation-schema";
-import { submitEvidenceAction } from "@/app/actions";
+import { submitEvidenceAction, checkIfAlreadySubmitted } from "@/app/actions";
 import { notifyIframeResize } from "@/app/ClientLayout";
 
 // Helper function to check if form is complete
@@ -596,6 +596,22 @@ export default function ConfigDrivenSurveyForm() {
   const [securityWarnings, setSecurityWarnings] = useState<Array<{ type: string; message: string; resources?: Record<string, string> }>>([]);
 
   const conditionalValue = config.conditionalLogic.getApplicableValue(formData);
+
+  // Check if user has already submitted and redirect to success page
+  useEffect(() => {
+    const checkSubmission = async () => {
+      try {
+        const alreadySubmitted = await checkIfAlreadySubmitted();
+        if (alreadySubmitted) {
+          router.push(`/statement-portal/success${isEmbed ? "?embed=true" : ""}`);
+        }
+      } catch (error) {
+        console.error("Failed to check submission status:", error);
+        // Fail open - show form if check fails
+      }
+    };
+    checkSubmission();
+  }, [router, isEmbed]);
 
   // Auto-save to localStorage
   useEffect(() => {

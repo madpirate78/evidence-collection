@@ -18,8 +18,8 @@ interface RateLimitConfig {
 }
 
 const DEFAULT_CONFIG: RateLimitConfig = {
-  maxAttempts: 5,
-  windowMinutes: 15,
+  maxAttempts: 1,
+  windowMinutes: 4320, // 3 days
 };
 
 export async function checkRateLimit(
@@ -186,5 +186,50 @@ export async function getRateLimitStatus(
   } catch (error) {
     console.error("Rate limit status error:", error);
     return null;
+  }
+}
+
+// Check if IP has already submitted (without incrementing counter)
+export async function hasAlreadySubmitted(
+  identifier: string,
+  action: string = "submit_evidence"
+): Promise<boolean> {
+  try {
+    const windowMinutes = DEFAULT_CONFIG.windowMinutes;
+    const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000);
+
+    const count = await prisma.rateLimit.count({
+      where: {
+        identifier,
+        action,
+        createdAt: { gt: windowStart },
+      },
+    });
+
+    return count > 0;
+  } catch (error) {
+    console.error("hasAlreadySubmitted error:", error);
+    return false; // Fail open - show form if error
+  }
+}
+
+// Cleanup old rate limit records (older than 7 days)
+export async function cleanupOldRateLimitRecords(): Promise<{
+  deleted: number;
+  error?: string;
+}> {
+  try {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const result = await prisma.rateLimit.deleteMany({
+      where: {
+        createdAt: { lt: sevenDaysAgo },
+      },
+    });
+
+    return { deleted: result.count };
+  } catch (error) {
+    console.error("Cleanup error:", error);
+    return { deleted: 0, error: String(error) };
   }
 }

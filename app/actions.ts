@@ -12,7 +12,7 @@ import {
   type SurveyConfig,
 } from "@/config/surveyQuestions";
 import { headers } from "next/headers";
-import { checkRateLimit } from "@/lib/rate-limiter";
+import { checkRateLimit, hasAlreadySubmitted } from "@/lib/rate-limiter";
 import { StatisticsCache, type Statistics } from "@/lib/statistics-cache";
 
 // Allowed domains for iframe embedding (skip CSRF for these)
@@ -498,5 +498,21 @@ export async function getStatisticsCacheInfoAction(): Promise<{
       source: 'fallback',
       version: '1.0',
     };
+  }
+}
+
+// Check if current IP has already submitted
+export async function checkIfAlreadySubmitted(): Promise<boolean> {
+  try {
+    const headersList = await headers();
+    const identifier =
+      headersList.get("x-forwarded-for") ||
+      headersList.get("x-real-ip") ||
+      "anonymous";
+
+    return await hasAlreadySubmitted(identifier, "submit_evidence");
+  } catch (error) {
+    console.error("checkIfAlreadySubmitted error:", error);
+    return false; // Fail open - show form if error
   }
 }
