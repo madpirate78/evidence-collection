@@ -21,7 +21,10 @@ const ALLOWED_EMBED_ORIGINS = [
   "www.workingtowardsfairness.org.uk",
 ];
 
-// Check if request is from an allowed embed origin
+// Check if request is from an allowed embed origin or embed mode
+// Note: For iframe embeds, the Referer header is the iframe's own URL, not the parent.
+// CSP frame-ancestors in middleware.ts already restricts which domains can embed,
+// so we trust requests that come from embed mode or have a valid referer.
 async function isAllowedEmbedRequest(): Promise<boolean> {
   const headersList = await headers();
   const referer = headersList.get("referer");
@@ -29,6 +32,14 @@ async function isAllowedEmbedRequest(): Promise<boolean> {
 
   try {
     const refererUrl = new URL(referer);
+
+    // Check if request is from embed mode (iframe) - CSP frame-ancestors validates the parent
+    const isEmbedMode = refererUrl.searchParams.get("embed") === "true";
+    if (isEmbedMode) {
+      return true;
+    }
+
+    // Direct access from allowed domains
     return ALLOWED_EMBED_ORIGINS.some(
       (domain) =>
         refererUrl.hostname === domain ||
