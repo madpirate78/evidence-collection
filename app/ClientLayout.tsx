@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 
 function Navigation() {
   return (
@@ -52,7 +52,7 @@ export function notifyIframeResize() {
   window.dispatchEvent(new CustomEvent("iframe-content-changed"));
 }
 
-function useEmbedHeightMessaging(isEmbed: boolean) {
+function useEmbedHeightMessaging(isEmbed: boolean, containerRef: React.RefObject<HTMLDivElement | null>) {
   useEffect(() => {
     if (!isEmbed) return;
 
@@ -61,10 +61,17 @@ function useEmbedHeightMessaging(isEmbed: boolean) {
     const sendHeight = () => {
       // Small delay to let DOM settle after changes
       setTimeout(() => {
-        const height = document.body.scrollHeight;
-        if (height !== lastHeight) {
-          lastHeight = height;
-          window.parent.postMessage({ type: "resize", height }, "*");
+        // Measure the actual container content, not scrollHeight which doesn't shrink
+        const container = containerRef.current;
+        if (!container) return;
+
+        // Force reflow to get accurate height after content changes
+        const height = container.getBoundingClientRect().height;
+        const roundedHeight = Math.ceil(height);
+
+        if (roundedHeight !== lastHeight) {
+          lastHeight = roundedHeight;
+          window.parent.postMessage({ type: "resize", height: roundedHeight }, "*");
         }
       }, 50);
     };
@@ -78,18 +85,19 @@ function useEmbedHeightMessaging(isEmbed: boolean) {
     return () => {
       window.removeEventListener("iframe-content-changed", sendHeight);
     };
-  }, [isEmbed]);
+  }, [isEmbed, containerRef]);
 }
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const isEmbed = searchParams.get("embed") === "true";
+  const embedContainerRef = useRef<HTMLDivElement>(null);
 
-  useEmbedHeightMessaging(isEmbed);
+  useEmbedHeightMessaging(isEmbed, embedContainerRef);
 
   if (isEmbed) {
     return (
-      <div className="bg-slate-50">
+      <div ref={embedContainerRef} className="bg-slate-50">
         <main className="container mx-auto px-4 py-8 max-w-7xl">
           {children}
         </main>
