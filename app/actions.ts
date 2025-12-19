@@ -107,6 +107,17 @@ export async function submitEvidenceAction(
         code: "RATE_LIMITED",
       };
     }
+
+    // 0.5. Origin validation - only allow submissions from allowed embed origins
+    const isFromAllowedOrigin = await isAllowedEmbedRequest();
+    if (!isFromAllowedOrigin) {
+      return {
+        error: "Submissions are only accepted from the official survey page.",
+        success: false,
+        code: "INVALID_ORIGIN",
+      };
+    }
+
     // 1. CSRF validation (if enabled in config)
     if (config.security.enableCSRFProtection) {
       const csrfCheck = await verifyCSRF(formData);
