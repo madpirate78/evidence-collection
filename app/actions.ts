@@ -15,19 +15,51 @@ import { headers } from "next/headers";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { StatisticsCache, type Statistics } from "@/lib/statistics-cache";
 
+// Allowed domains for iframe embedding (skip CSRF for these)
+const ALLOWED_EMBED_ORIGINS = [
+  "workingtowardsfairness.org.uk",
+  "www.workingtowardsfairness.org.uk",
+];
+
+// Check if request is from an allowed embed origin
+async function isAllowedEmbedRequest(): Promise<boolean> {
+  const headersList = await headers();
+  const referer = headersList.get("referer");
+  if (!referer) return false;
+
+  try {
+    const refererUrl = new URL(referer);
+    return ALLOWED_EMBED_ORIGINS.some(
+      (domain) =>
+        refererUrl.hostname === domain ||
+        refererUrl.hostname.endsWith(`.${domain}`)
+    );
+  } catch {
+    return false;
+  }
+}
+
 // CSRF verification with error handling
 async function verifyCSRF(
   formData: FormData
-): Promise<{ valid: boolean; error?: string }> {
+): Promise<{ valid: boolean; error?: string; skipped?: boolean }> {
   try {
     const token = formData.get("csrf_token") as string;
+    const cookieStore = await cookies();
+    const storedToken = cookieStore.get("csrf_token")?.value;
+
+    // If no cookie token (embed mode), check if from allowed origin
+    if (!storedToken) {
+      const isEmbed = await isAllowedEmbedRequest();
+      if (isEmbed) {
+        return { valid: true, skipped: true };
+      }
+      return { valid: false, error: "CSRF token missing" };
+    }
 
     if (!token) {
       return { valid: false, error: "CSRF token missing" };
     }
-
-    const cookieStore = await cookies();
-    const storedToken = cookieStore.get("csrf_token")?.value;
 
     const isValid = token === storedToken;
 
@@ -37,7 +69,7 @@ async function verifyCSRF(
 
     return { valid: true };
   } catch (error) {
-    console.error("CSRF verification error:", error);
+    // Log error server-side only
     return { valid: false, error: "CSRF verification failed" };
   }
 }

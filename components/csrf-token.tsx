@@ -11,6 +11,11 @@ function getCSRFToken(): string {
   return match ? match[1] : "";
 }
 
+function isEmbedMode(): boolean {
+  if (typeof window === "undefined") return false;
+  return new URLSearchParams(window.location.search).get("embed") === "true";
+}
+
 export function CSRFTokenInput() {
   const { token, isReady } = useCSRFToken();
 
@@ -18,12 +23,12 @@ export function CSRFTokenInput() {
     return null;
   }
 
-  if (!token) {
-    console.warn("No CSRF token found - form submission may fail");
+  // In embed mode, CSRF is handled server-side via referer check
+  if (!token && !isEmbedMode()) {
     return null;
   }
 
-  return <input type="hidden" name="csrf_token" value={token} />;
+  return <input type="hidden" name="csrf_token" value={token || ""} />;
 }
 
 export function useCSRFToken(): { token: string; isReady: boolean } {
