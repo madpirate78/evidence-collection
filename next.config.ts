@@ -6,13 +6,10 @@ const securityHeaders = [
     value: "on",
   },
   {
-    key: "X-Frame-Options",
-    value: "SAMEORIGIN",
-  },
-  {
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=()",
   },
+  // X-Frame-Options removed - handled by middleware based on embed mode
 ];
 const nextConfig: NextConfig = {
   async headers() {

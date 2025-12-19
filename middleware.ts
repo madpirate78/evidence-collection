@@ -29,13 +29,13 @@ export function middleware(request: NextRequest) {
   // TEMPORARY DEMO AUTH - COMMENTED OUT FOR PUBLIC ACCESS
   /*
   const isDemoAuthEnabled = process.env.DEMO_USERNAME && process.env.DEMO_PASSWORD
-  
+
   if (isDemoAuthEnabled) {
     // Only protect the home page and main routes, not API endpoints
     const isProtectedRoute = request.nextUrl.pathname === '/' ||
                             request.nextUrl.pathname.startsWith('/statement-portal') ||
                             request.nextUrl.pathname.startsWith('/statistics')
-    
+
     if (isProtectedRoute && !checkDemoAuth(request)) {
       return new NextResponse('Demo Access Required', {
         status: 401,
@@ -47,6 +47,11 @@ export function middleware(request: NextRequest) {
     }
   }
   */
+
+  // Check if this is an embed request
+  const isEmbed = request.nextUrl.searchParams.get('embed') === 'true'
+  const isEmbeddablePath = request.nextUrl.pathname.startsWith('/statement-portal') ||
+                           request.nextUrl.pathname.startsWith('/statistics')
 
   // Existing CSRF protection and security headers
   const response = NextResponse.next()
@@ -64,16 +69,26 @@ export function middleware(request: NextRequest) {
   }
 
   // Security headers
-  response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('X-XSS-Protection', '1; mode=block')
-  
-  // CSP headers
-  response.headers.set(
-    'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none';"
-  )
+
+  // Iframe embedding headers - allow embedding from workingtowardsfairness.org.uk for embed requests
+  if (isEmbed && isEmbeddablePath) {
+    // Allow iframe embedding from the parent site
+    response.headers.set(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self' https://workingtowardsfairness.org.uk https://*.workingtowardsfairness.org.uk;"
+    )
+    // Don't set X-Frame-Options for embed mode (CSP frame-ancestors takes precedence)
+  } else {
+    // Block iframe embedding for non-embed requests
+    response.headers.set('X-Frame-Options', 'DENY')
+    response.headers.set(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none';"
+    )
+  }
 
   return response
 }

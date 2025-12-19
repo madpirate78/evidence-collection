@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 function Navigation() {
   return (
@@ -45,11 +47,20 @@ function Footer() {
   );
 }
 
-export default function ClientLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function LayoutContent({ children }: { children: React.ReactNode }) {
+  const searchParams = useSearchParams();
+  const isEmbed = searchParams.get("embed") === "true";
+
+  if (isEmbed) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <main className="container mx-auto px-4 py-8 max-w-7xl">
+          {children}
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Navigation />
@@ -58,5 +69,17 @@ export default function ClientLayout({
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function ClientLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
+      <LayoutContent>{children}</LayoutContent>
+    </Suspense>
   );
 }
