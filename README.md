@@ -27,14 +27,14 @@ Built for a UK policy research campaign requiring:
 
 - **Multi-step Survey Form** - Dynamic form with conditional logic and validation
 - **Real-time Statistics Dashboard** - Animated counters, calculated percentages from live data
-- **File-based Caching** - Statistics cached with cron-triggered updates
+- **File-based Caching** - Statistics cached for fast API responses
 - **Dark/Light Mode** - System-aware theme switching
 - **Mobile Responsive** - Full responsive design
 
 ## Architecture Decisions
 
 **Why file-based caching?**
-Statistics expensive to calculate (500ms+ for complex aggregations). Cron job updates cache weekly, API serves from memory (10ms response).
+Statistics expensive to calculate (500ms+ for complex aggregations). Cache updates on submissions, API serves from memory (10ms response).
 
 **Why OWASP ZAP testing?**
 Handling sensitive submissions required professional-grade security validation. Automated testing catches vulnerabilities before production.
