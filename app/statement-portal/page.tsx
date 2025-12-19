@@ -630,10 +630,15 @@ export default function ConfigDrivenSurveyForm() {
     localStorage.setItem(`${config.surveyId}_draft`, JSON.stringify(formData));
   }, [formData, config.surveyId]);
 
-  // Notify parent iframe when questions change (for dynamic height)
+  // Notify parent iframe when form changes (for dynamic height)
+  // This covers both conditionalValue changes and follow-up question visibility
   useEffect(() => {
-    notifyIframeResize();
-  }, [conditionalValue]);
+    // Small delay to let DOM update after state change
+    const timer = setTimeout(() => {
+      notifyIframeResize();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [formData]);
 
   const updateField = (questionId: string, value: FormFieldValue) => {
     setFormData((prev) => ({ ...prev, [questionId]: value }));
