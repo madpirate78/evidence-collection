@@ -47,44 +47,36 @@ function Footer() {
   );
 }
 
+// Dispatch this event when iframe content changes height (e.g., form questions appear)
+export function notifyIframeResize() {
+  window.dispatchEvent(new CustomEvent("iframe-content-changed"));
+}
+
 function useEmbedHeightMessaging(isEmbed: boolean) {
   useEffect(() => {
     if (!isEmbed) return;
 
     let lastHeight = 0;
-    let debounceTimer: NodeJS.Timeout | null = null;
 
     const sendHeight = () => {
-      const height = document.body.scrollHeight;
-      // Only send if height actually changed
-      if (height !== lastHeight) {
-        lastHeight = height;
-        window.parent.postMessage({ type: "resize", height }, "*");
-      }
+      // Small delay to let DOM settle after changes
+      setTimeout(() => {
+        const height = document.body.scrollHeight;
+        if (height !== lastHeight) {
+          lastHeight = height;
+          window.parent.postMessage({ type: "resize", height }, "*");
+        }
+      }, 50);
     };
 
-    const debouncedSendHeight = () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(sendHeight, 100);
-    };
+    // Send initial height
+    sendHeight();
 
-    // Send initial height after a short delay for render
-    setTimeout(sendHeight, 200);
-
-    // Send on resize
-    window.addEventListener("resize", debouncedSendHeight);
-
-    // Observe DOM changes (form fields appearing/disappearing)
-    const observer = new MutationObserver(debouncedSendHeight);
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
+    // Listen for content change events from form
+    window.addEventListener("iframe-content-changed", sendHeight);
 
     return () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      window.removeEventListener("resize", debouncedSendHeight);
-      observer.disconnect();
+      window.removeEventListener("iframe-content-changed", sendHeight);
     };
   }, [isEmbed]);
 }

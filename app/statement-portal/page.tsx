@@ -13,6 +13,7 @@ import {
   validateFormWithConfig,
 } from "@/schemas/form-validation-schema";
 import { submitEvidenceAction } from "@/app/actions";
+import { notifyIframeResize } from "@/app/ClientLayout";
 
 // Helper function to check if form is complete
 function isFormComplete(
@@ -628,6 +629,11 @@ export default function ConfigDrivenSurveyForm() {
   useEffect(() => {
     localStorage.setItem(`${config.surveyId}_draft`, JSON.stringify(formData));
   }, [formData, config.surveyId]);
+
+  // Notify parent iframe when questions change (for dynamic height)
+  useEffect(() => {
+    notifyIframeResize();
+  }, [conditionalValue]);
 
   const updateField = (questionId: string, value: FormFieldValue) => {
     setFormData((prev) => ({ ...prev, [questionId]: value }));
