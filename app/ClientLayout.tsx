@@ -51,29 +51,39 @@ function useEmbedHeightMessaging(isEmbed: boolean) {
   useEffect(() => {
     if (!isEmbed) return;
 
+    let lastHeight = 0;
+    let debounceTimer: NodeJS.Timeout | null = null;
+
     const sendHeight = () => {
-      window.parent.postMessage(
-        { type: "resize", height: document.body.scrollHeight },
-        "*"
-      );
+      const height = document.body.scrollHeight;
+      // Only send if height actually changed
+      if (height !== lastHeight) {
+        lastHeight = height;
+        window.parent.postMessage({ type: "resize", height }, "*");
+      }
     };
 
-    // Send initial height
-    sendHeight();
+    const debouncedSendHeight = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(sendHeight, 100);
+    };
+
+    // Send initial height after a short delay for render
+    setTimeout(sendHeight, 200);
 
     // Send on resize
-    window.addEventListener("resize", sendHeight);
+    window.addEventListener("resize", debouncedSendHeight);
 
     // Observe DOM changes (form fields appearing/disappearing)
-    const observer = new MutationObserver(sendHeight);
+    const observer = new MutationObserver(debouncedSendHeight);
     observer.observe(document.body, {
       childList: true,
       subtree: true,
-      attributes: true,
     });
 
     return () => {
-      window.removeEventListener("resize", sendHeight);
+      if (debounceTimer) clearTimeout(debounceTimer);
+      window.removeEventListener("resize", debouncedSendHeight);
       observer.disconnect();
     };
   }, [isEmbed]);
