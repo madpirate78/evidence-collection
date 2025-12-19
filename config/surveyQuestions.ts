@@ -321,7 +321,7 @@ export const CMS_SURVEY_CONFIG: SurveyConfig = {
     maxSubmissions: 5, // Add this for your schema
     requiresCsrf: true, // Add this for your schema
     enableCrisisProtocol: true,
-    enableCSRFProtection: true,
+    enableCSRFProtection: false,
   },
 
   // Database configuration
