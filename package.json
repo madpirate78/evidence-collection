@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "postinstall": "prisma generate",
-    "build": "next build",
-    "start": "prisma migrate deploy && next start -H 0.0.0.0 -p ${PORT:-3000}",
+    "build": "DATABASE_URL=$DATABASE_PUBLIC_URL prisma migrate deploy && next build",
+    "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "type-check": "tsc --noEmit",
