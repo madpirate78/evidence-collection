@@ -74,12 +74,14 @@ export function middleware(request: NextRequest) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('X-XSS-Protection', '1; mode=block')
 
-  // Iframe embedding headers - allow embedding from workingtowardsfairness.org.uk for embed requests
-  if (isEmbed && isEmbeddablePath) {
-    // Allow iframe embedding from the parent site
+  // Iframe embedding headers - configurable via ALLOWED_EMBED_ORIGIN env var
+  const allowedEmbedOrigin = process.env.ALLOWED_EMBED_ORIGIN
+  if (isEmbed && isEmbeddablePath && allowedEmbedOrigin) {
+    // Allow iframe embedding from the configured parent site
+    const frameAncestors = `'self' https://${allowedEmbedOrigin} https://*.${allowedEmbedOrigin}`
     response.headers.set(
       'Content-Security-Policy',
-      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self' https://workingtowardsfairness.org.uk https://*.workingtowardsfairness.org.uk;"
+      `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors ${frameAncestors};`
     )
     // Don't set X-Frame-Options for embed mode (CSP frame-ancestors takes precedence)
   } else {

@@ -15,11 +15,13 @@ import { headers } from "next/headers";
 import { checkRateLimit, hasAlreadySubmitted } from "@/lib/rate-limiter";
 import { StatisticsCache, type Statistics } from "@/lib/statistics-cache";
 
-// Allowed domains for iframe embedding (skip CSRF for these)
-const ALLOWED_EMBED_ORIGINS = [
-  "workingtowardsfairness.org.uk",
-  "www.workingtowardsfairness.org.uk",
-];
+// Allowed domains for iframe embedding - configurable via ALLOWED_EMBED_ORIGIN env var
+function getAllowedEmbedOrigins(): string[] {
+  const origin = process.env.ALLOWED_EMBED_ORIGIN;
+  if (!origin) return [];
+  // Support both the base domain and www subdomain
+  return [origin, `www.${origin}`];
+}
 
 // Check if request is from an allowed embed origin or embed mode
 // Note: For iframe embeds, the Referer header is the iframe's own URL, not the parent.
@@ -40,7 +42,8 @@ async function isAllowedEmbedRequest(): Promise<boolean> {
     }
 
     // Direct access from allowed domains
-    return ALLOWED_EMBED_ORIGINS.some(
+    const allowedOrigins = getAllowedEmbedOrigins();
+    return allowedOrigins.some(
       (domain) =>
         refererUrl.hostname === domain ||
         refererUrl.hostname.endsWith(`.${domain}`)

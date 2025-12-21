@@ -1,14 +1,14 @@
-# CMS Policy Research Platform
+# Survey & Analytics Platform
 
 A full-stack survey and analytics platform built with Next.js 15, featuring real-time statistics, secure form submission, and comprehensive security testing.
 
-## Project Context
+## Features
 
-Built for a UK policy research campaign requiring:
 - Anonymous data collection with zero user tracking
 - Real-time statistical aggregation
 - Security-first architecture for sensitive submissions
 - GDPR compliance by design
+- Iframe embedding support with CSP protection
 
 **Privacy-first approach:** No user identification, no tracking, no analytics. All data aggregated and anonymized.
 
