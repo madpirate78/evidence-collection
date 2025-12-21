@@ -21,13 +21,10 @@ describe('Rate Limiter (Prisma)', () => {
     it('should allow requests when under rate limit', async () => {
       // No active block
       mockPrismaClient.rateLimitBlock.findFirst.mockResolvedValue(null)
-      // 2 previous attempts
-      mockPrismaClient.rateLimit.findMany.mockResolvedValue([
-        { id: 1n, identifier: '127.0.0.1', action: 'submit_form', createdAt: new Date() },
-        { id: 2n, identifier: '127.0.0.1', action: 'submit_form', createdAt: new Date() },
-      ])
+      // 0 previous attempts (under the limit of 1)
+      mockPrismaClient.rateLimit.findMany.mockResolvedValue([])
       mockPrismaClient.rateLimit.create.mockResolvedValue({
-        id: 3n,
+        id: 1n,
         identifier: '127.0.0.1',
         action: 'submit_form',
         createdAt: new Date(),
@@ -36,8 +33,8 @@ describe('Rate Limiter (Prisma)', () => {
       const result = await checkRateLimit('127.0.0.1', 'submit_form')
 
       expect(result.allowed).toBe(true)
-      expect(result.current_attempts).toBe(3)
-      expect(result.remaining_attempts).toBe(2)
+      expect(result.current_attempts).toBe(1)
+      expect(result.remaining_attempts).toBe(0)
       expect(mockPrismaClient.rateLimit.create).toHaveBeenCalledWith({
         data: { identifier: '127.0.0.1', action: 'submit_form', userAgent: null },
       })
@@ -48,20 +45,16 @@ describe('Rate Limiter (Prisma)', () => {
 
       // No active block
       mockPrismaClient.rateLimitBlock.findFirst.mockResolvedValue(null)
-      // 5 previous attempts (max)
+      // 1 previous attempt (at max for limit of 1)
       mockPrismaClient.rateLimit.findMany.mockResolvedValue([
         { id: 1n, identifier: '127.0.0.1', action: 'submit_form', createdAt: oldestAttempt },
-        { id: 2n, identifier: '127.0.0.1', action: 'submit_form', createdAt: new Date() },
-        { id: 3n, identifier: '127.0.0.1', action: 'submit_form', createdAt: new Date() },
-        { id: 4n, identifier: '127.0.0.1', action: 'submit_form', createdAt: new Date() },
-        { id: 5n, identifier: '127.0.0.1', action: 'submit_form', createdAt: new Date() },
       ])
       mockPrismaClient.$transaction.mockResolvedValue([{}, {}])
 
       const result = await checkRateLimit('127.0.0.1', 'submit_form')
 
       expect(result.allowed).toBe(false)
-      expect(result.current_attempts).toBe(5)
+      expect(result.current_attempts).toBe(1)
       expect(result.remaining_attempts).toBe(0)
       expect(result.message).toContain('Too many attempts')
       expect(mockPrismaClient.$transaction).toHaveBeenCalled()
@@ -154,28 +147,28 @@ describe('Rate Limiter (Prisma)', () => {
 
       expect(result.allowed).toBe(true)
       expect(result.current_attempts).toBe(1)
-      expect(result.remaining_attempts).toBe(4)
+      expect(result.remaining_attempts).toBe(0)
     })
   })
 
   describe('getRateLimitStatus', () => {
     it('should return rate limit status without incrementing', async () => {
-      mockPrismaClient.rateLimit.count.mockResolvedValue(3)
+      mockPrismaClient.rateLimit.count.mockResolvedValue(0)
 
       const result = await getRateLimitStatus('127.0.0.1', 'submit_form')
 
       expect(result).toEqual({
         allowed: true,
-        current_attempts: 3,
-        max_attempts: 5,
-        remaining_attempts: 2,
-        window_minutes: 15,
+        current_attempts: 0,
+        max_attempts: 1,
+        remaining_attempts: 1,
+        window_minutes: 4320,
       })
       expect(mockPrismaClient.rateLimit.create).not.toHaveBeenCalled()
     })
 
     it('should return not allowed when at limit', async () => {
-      mockPrismaClient.rateLimit.count.mockResolvedValue(5)
+      mockPrismaClient.rateLimit.count.mockResolvedValue(1)
 
       const result = await getRateLimitStatus('127.0.0.1', 'submit_form')
 
