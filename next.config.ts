@@ -12,6 +12,7 @@ const securityHeaders = [
   // X-Frame-Options removed - handled by middleware based on embed mode
 ];
 const nextConfig: NextConfig = {
+  output: "standalone",
   async headers() {
     return [
       {
