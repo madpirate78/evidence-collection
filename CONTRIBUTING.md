@@ -3,25 +3,25 @@
 ## Setup
 
 ```bash
-npm install
+bun install
 cp .env.example .env.local   # Set DATABASE_URL
-npx prisma migrate deploy
-npm run dev
+bunx prisma migrate deploy
+bun run dev
 ```
 
 ## Testing
 
 ```bash
-npm test                     # All tests
-npm run test:coverage        # With coverage
-npm run test:rate-limit      # Rate limiter only
+bun test                     # All tests
+bun run test:coverage        # With coverage
+bun run test:rate-limit      # Rate limiter only
 ```
 
 ## Security Testing
 
 ```bash
-npm run security:check       # Dependency audit + tests
-npm run security:pentest     # OWASP ZAP scan (requires Docker)
+bun run security:check       # Dependency audit + tests
+bun run security:pentest     # OWASP ZAP scan (requires Docker)
 ```
 
 ## Security Features

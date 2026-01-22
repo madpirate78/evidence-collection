@@ -52,13 +52,13 @@ fi
 
 echo "To start local environment if not running:"
 echo "  1. ./scripts/start-test-env.sh development"
-echo "  2. npm run dev (in another terminal)"
+echo "  2. bun run dev (in another terminal)"
 echo ""
 
 # Check if local server is running
 if ! curl -s "$TARGET_URL" > /dev/null; then
     echo -e "${RED}❌ Local server not running at $TARGET_URL${NC}"
-    echo "Start with: npm run dev"
+    echo "Start with: bun run dev"
     exit 1
 fi
 
@@ -108,9 +108,9 @@ fi
 echo ""
 echo "3. Running additional security checks..."
 
-# Run npm audit
-echo "   - NPM dependency audit..."
-npm audit --json > "${REPORT_DIR}/${REPORT_NAME}_npm_audit.json" || true
+# Run dependency audit
+echo "   - Dependency audit..."
+bunx npm@latest audit --json > "${REPORT_DIR}/${REPORT_NAME}_npm_audit.json" || true
 
 # Check security headers
 echo "   - Security headers check..."

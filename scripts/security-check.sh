@@ -15,15 +15,15 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Check if npm is installed
-if ! command -v npm &> /dev/null; then
-    echo -e "${RED}❌ npm is not installed${NC}"
+# Check if bun is installed
+if ! command -v bun &> /dev/null; then
+    echo -e "${RED}❌ bun is not installed${NC}"
     exit 1
 fi
 
-echo "1. Running npm audit for CVE scanning..."
-echo "----------------------------------------"
-if npm audit --audit-level=moderate; then
+echo "1. Running audit for CVE scanning..."
+echo "------------------------------------"
+if bunx npm@latest audit --audit-level=moderate; then
     echo -e "${GREEN}✅ No moderate or higher vulnerabilities found${NC}"
 else
     echo -e "${YELLOW}⚠️  Vulnerabilities found - review above${NC}"
@@ -32,17 +32,17 @@ echo ""
 
 echo "2. Checking for critical vulnerabilities..."
 echo "-------------------------------------------"
-if npm audit --audit-level=critical; then
+if bunx npm@latest audit --audit-level=critical; then
     echo -e "${GREEN}✅ No critical vulnerabilities${NC}"
 else
     echo -e "${RED}❌ Critical vulnerabilities detected!${NC}"
-    echo "   Run 'npm audit' for details"
+    echo "   Run 'bunx npm@latest audit' for details"
 fi
 echo ""
 
 echo "3. Running security unit tests..."
 echo "---------------------------------"
-if npm run test:security; then
+if bun run test:security; then
     echo -e "${GREEN}✅ Security tests passed${NC}"
 else
     echo -e "${RED}❌ Security tests failed${NC}"
@@ -88,7 +88,7 @@ echo "======================================"
 echo ""
 echo "To run a full penetration test:"
 echo "1. Install OWASP ZAP: https://www.zaproxy.org/download/"
-echo "2. Start the application: npm run dev"
+echo "2. Start the application: bun run dev"
 echo "3. Run: zap-baseline.py -t http://localhost:3000 -c .zap/rules.tsv"
 echo ""
 echo "For detailed security testing documentation, see SECURITY_TESTING.md"
@@ -102,9 +102,9 @@ echo "Generating report: $REPORT_FILE"
     echo "Generated: $(date)"
     echo ""
     echo "CVE Scan Results:"
-    npm audit --json 2>/dev/null | jq '.metadata.vulnerabilities' || echo "Unable to parse audit results"
+    bunx npm@latest audit --json 2>/dev/null | jq '.metadata.vulnerabilities' || echo "Unable to parse audit results"
     echo ""
-    echo "Security Tests: $(npm run test:security &>/dev/null && echo "PASSED" || echo "FAILED")"
+    echo "Security Tests: $(bun run test:security &>/dev/null && echo "PASSED" || echo "FAILED")"
     echo "Security Headers: Configured in middleware.ts"
     echo "RLS Policies: $RLS_CHECK found"
 } > "$REPORT_FILE"

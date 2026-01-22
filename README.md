@@ -20,7 +20,7 @@ A full-stack survey and analytics platform built with Next.js 15, featuring real
 | Backend | Next.js API Routes, Prisma ORM |
 | Database | PostgreSQL (Railway) |
 | UI | Radix UI, React Hook Form, Zod validation |
-| Testing | Jest, OWASP ZAP, npm audit |
+| Testing | Jest, OWASP ZAP, bun audit |
 | Deployment | Railway (PaaS) |
 
 ## Features
@@ -52,25 +52,25 @@ Protects against abuse while allowing legitimate use. IP + User-Agent fingerprin
 | Rate Limiting | Active |
 
 ```bash
-npm run security:check     # Dependency audit + security tests
-npm run security:pentest   # Full OWASP ZAP scan
+bun run security:check     # Dependency audit + security tests
+bun run security:pentest   # Full OWASP ZAP scan
 ```
 
 ## Testing
 
 ```bash
-npm test                   # Run all tests
-npm run test:coverage      # Coverage report
-npm run test:security      # Rate limiter tests
+bun test                   # Run all tests
+bun run test:coverage      # Coverage report
+bun run test:security      # Rate limiter tests
 ```
 
 ## Quick Start
 
 ```bash
-npm install
+bun install
 cp .env.example .env.local  # Configure DATABASE_URL
-npx prisma migrate deploy
-npm run dev
+bunx prisma migrate deploy
+bun run dev
 ```
 
 ## Project Structure
