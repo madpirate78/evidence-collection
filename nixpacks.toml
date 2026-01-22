@@ -1,14 +1,17 @@
-# Force Nixpacks to use Node.js provider, not Deno
+# Use Bun for package management
 providers = ["node"]
 
 [variables]
 NIXPACKS_PATH = "/app/node_modules/.bin"
 
+[phases.setup]
+nixPkgs = ["bun"]
+
 [phases.install]
-cmds = ["npm ci"]
+cmds = ["bun install --frozen-lockfile"]
 
 [phases.build]
-cmds = ["npm run build", "cp -r public .next/standalone/", "cp -r .next/static .next/standalone/.next/"]
+cmds = ["bun run build", "cp -r public .next/standalone/", "cp -r .next/static .next/standalone/.next/"]
 
 [start]
 cmd = "PORT=${PORT:-3000} HOSTNAME=0.0.0.0 node .next/standalone/server.js"
