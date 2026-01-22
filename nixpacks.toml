@@ -5,7 +5,7 @@ providers = ["node"]
 NIXPACKS_PATH = "/app/node_modules/.bin"
 
 [phases.setup]
-nixPkgs = ["bun", "nodejs_20"]
+nixPkgs = ["bun"]
 
 [phases.install]
 cmds = ["bun install --frozen-lockfile"]
@@ -14,4 +14,4 @@ cmds = ["bun install --frozen-lockfile"]
 cmds = ["bun run build", "cp -r public .next/standalone/", "cp -r .next/static .next/standalone/.next/"]
 
 [start]
-cmd = "PORT=${PORT:-3000} HOSTNAME=0.0.0.0 node .next/standalone/server.js"
+cmd = "PORT=${PORT:-3000} HOSTNAME=0.0.0.0 bun .next/standalone/server.js"
