@@ -15,19 +15,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: '20'
-          cache: 'npm'
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
 
-      - name: Run npm audit
+      - name: Run npm audit (via npx)
         run: |
-          npm audit --json > npm-audit-results.json || true
-          npm audit --audit-level=moderate
+          npx npm@latest audit --json > npm-audit-results.json || true
+          npx npm@latest audit --audit-level=moderate
         continue-on-error: true
 
       - name: Upload audit results
@@ -39,7 +38,7 @@ jobs:
 
       - name: Check for critical vulnerabilities
         run: |
-          if npm audit --audit-level=critical; then
+          if npx npm@latest audit --audit-level=critical; then
             echo "No critical vulnerabilities found"
           else
             echo "Critical vulnerabilities detected!"
@@ -54,17 +53,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: '20'
-          cache: 'npm'
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Run security tests
-        run: npm run test:security
+        run: bun run test:security
 
       - name: Upload test results
         if: always()
