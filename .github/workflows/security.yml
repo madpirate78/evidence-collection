@@ -23,10 +23,13 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Run npm audit (via npx)
+      - name: Generate package-lock.json for audit
+        run: npm i --package-lock-only
+
+      - name: Run npm audit
         run: |
-          npx npm@latest audit --json > npm-audit-results.json || true
-          npx npm@latest audit --audit-level=moderate
+          npm audit --json > npm-audit-results.json || true
+          npm audit --audit-level=moderate
         continue-on-error: true
 
       - name: Upload audit results
@@ -38,7 +41,7 @@ jobs:
 
       - name: Check for critical vulnerabilities
         run: |
-          if npx npm@latest audit --audit-level=critical; then
+          if npm audit --audit-level=critical; then
             echo "No critical vulnerabilities found"
           else
             echo "Critical vulnerabilities detected!"
