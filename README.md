@@ -18,7 +18,7 @@ A full-stack survey and analytics platform built with Next.js 15, featuring real
 |-------|------------|
 | Frontend | Next.js 15, React 18, TypeScript, Tailwind CSS |
 | Backend | Next.js API Routes, Prisma ORM |
-| Database | PostgreSQL (Railway) |
+| Database | PostgreSQL 16 (Neon) |
 | UI | Radix UI, React Hook Form, Zod validation |
 | Testing | Jest, OWASP ZAP, bun audit |
 | Deployment | Railway (PaaS) |
