@@ -11,6 +11,9 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: env("DIRECT_DATABASE_URL") || env("DATABASE_URL"),
+    // process.env used for DIRECT_DATABASE_URL since Prisma's env() throws
+    // when the variable is missing, preventing the fallback from executing.
+    // DIRECT_DATABASE_URL is optional (only needed for migrations bypassing pgbouncer).
+    url: process.env.DIRECT_DATABASE_URL || env("DATABASE_URL"),
   },
 });
