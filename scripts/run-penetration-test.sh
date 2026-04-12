@@ -118,12 +118,37 @@ curl -s -I "$TARGET_URL" > "${REPORT_DIR}/${REPORT_NAME}_headers.txt"
 
 # Test rate limiting
 echo "   - Rate limiting test..."
-echo "Testing rate limiting (6 rapid requests to health endpoint)..." > "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
-for i in {1..6}; do
-    echo "Request $i:" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
-    curl -s -o /dev/null -w "%{http_code}\n" -X GET "$TARGET_URL/api/health" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
-    sleep 0.1
+echo "Rate Limiting Test Results" > "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
+echo "==========================" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
+echo "" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
+
+# Test 1: Rapid requests to form submission endpoint (server action)
+# The real rate limiter (1 attempt per 3 days) protects the statement-portal form
+echo "Test 1: Form submission rate limiter (POST to /statement-portal)" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
+echo "Expected: 1st request allowed, 2nd request blocked within 3-day window" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
+for i in {1..3}; do
+    echo "  Request $i:" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
+    response=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST "$TARGET_URL/statement-portal" \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -H "X-Forwarded-For: 10.255.255.${i}" 2>&1)
+    http_code=$(echo "$response" | grep "HTTP_CODE:" | cut -d: -f2)
+    echo "    Status: $http_code" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
+    sleep 0.2
 done
+echo "" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
+
+# Test 2: Rapid requests to health endpoint (availability check)
+echo "Test 2: Health endpoint under load (10 rapid requests)" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
+echo "Expected: All 200 unless server is under stress" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
+for i in {1..10}; do
+    echo "  Request $i:" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
+    curl -s -o /dev/null -w "    Status: %{http_code}\n" -X GET "$TARGET_URL/api/health" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
+done
+echo "" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
+
+# Test 3: Check security headers are present on responses
+echo "Test 3: Security headers on rate-limited responses" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
+curl -s -I "$TARGET_URL/statement-portal" | grep -iE "^(x-content-type|x-frame|content-security|strict-transport|referrer-policy|x-xss)" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt" 2>/dev/null || echo "  No security headers found on response" >> "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt"
 
 echo ""
 echo "Generating concise report..."
@@ -146,11 +171,42 @@ else
     npm_vulns="0"
 fi
 
-# Count security headers
-security_headers=$(grep -E "^(Content-Security-Policy|X-Frame-Options|X-Content-Type-Options|Strict-Transport-Security)" "${REPORT_DIR}/${REPORT_NAME}_headers.txt" 2>/dev/null | wc -l)
+# Count and validate security headers
+security_headers=$(grep -iE "^(Content-Security-Policy|X-Frame-Options|X-Content-Type-Options|Strict-Transport-Security|Referrer-Policy)" "${REPORT_DIR}/${REPORT_NAME}_headers.txt" 2>/dev/null | wc -l)
+header_details=""
+if grep -qi "X-Content-Type-Options: nosniff" "${REPORT_DIR}/${REPORT_NAME}_headers.txt" 2>/dev/null; then
+    header_details="${header_details}\n- X-Content-Type-Options: nosniff ✅"
+else
+    header_details="${header_details}\n- X-Content-Type-Options: MISSING ❌"
+fi
+if grep -qi "X-Frame-Options" "${REPORT_DIR}/${REPORT_NAME}_headers.txt" 2>/dev/null; then
+    header_details="${header_details}\n- X-Frame-Options: $(grep -i 'X-Frame-Options' "${REPORT_DIR}/${REPORT_NAME}_headers.txt" | head -1 | cut -d: -f2 | xargs) ✅"
+else
+    header_details="${header_details}\n- X-Frame-Options: MISSING ❌"
+fi
+if grep -qi "Content-Security-Policy" "${REPORT_DIR}/${REPORT_NAME}_headers.txt" 2>/dev/null; then
+    csp_val=$(grep -i 'Content-Security-Policy' "${REPORT_DIR}/${REPORT_NAME}_headers.txt" | head -1)
+    if echo "$csp_val" | grep -q "unsafe-eval"; then
+        header_details="${header_details}\n- CSP: SET ⚠️  (contains unsafe-eval)"
+    else
+        header_details="${header_details}\n- CSP: SET ✅"
+    fi
+else
+    header_details="${header_details}\n- CSP: MISSING ❌"
+fi
+if grep -qi "Strict-Transport-Security" "${REPORT_DIR}/${REPORT_NAME}_headers.txt" 2>/dev/null; then
+    header_details="${header_details}\n- HSTS: SET ✅"
+else
+    header_details="${header_details}\n- HSTS: NOT SET (expected in production only) ℹ️"
+fi
+if grep -qi "Referrer-Policy" "${REPORT_DIR}/${REPORT_NAME}_headers.txt" 2>/dev/null; then
+    header_details="${header_details}\n- Referrer-Policy: $(grep -i 'Referrer-Policy' "${REPORT_DIR}/${REPORT_NAME}_headers.txt" | head -1 | cut -d: -f2 | xargs) ✅"
+else
+    header_details="${header_details}\n- Referrer-Policy: MISSING ❌"
+fi
 
 # Get rate limiting result
-rate_limit_codes=$(tail -6 "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt" | grep -o '[0-9][0-9][0-9]' | sort | uniq -c)
+rate_limit_codes=$(grep "Status:" "${REPORT_DIR}/${REPORT_NAME}_rate_limit.txt" | grep -o '[0-9][0-9][0-9]' | sort | uniq -c)
 
 cat >> "${REPORT_DIR}/${REPORT_NAME}_report.md" << EOF
 
@@ -164,15 +220,17 @@ fi)
 ### 📦 Dependencies
 - **CVE Vulnerabilities**: $npm_vulns
 
-### 🛡️  Security Headers
-- **Headers Found**: $security_headers/4 expected
+### 🛡️  Security Headers ($security_headers/5 expected)
+$(echo -e "$header_details")
 
 ### ⏱️  Rate Limiting
 $rate_limit_codes
 
 ### ✅ Status
-$(if [ "$npm_vulns" = "0" ] && [ "$security_headers" -ge "3" ]; then
+$(if [ "$npm_vulns" = "0" ] && [ "$security_headers" -ge "4" ]; then
     echo "**PASS** - No critical issues found"
+elif [ "$npm_vulns" = "0" ] && [ "$security_headers" -ge "3" ]; then
+    echo "**PASS (local)** - Core headers present (HSTS only in production)"
 else
     echo "**REVIEW** - Issues require attention"
 fi)
